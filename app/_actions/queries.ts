@@ -114,9 +114,10 @@ const calculateArraySimilarity = (array1: any[], array2: any[]): { similarity: n
   const set1 = new Set(array1);
   const set2 = new Set(array2);
   const intersection = new Set([...set1].filter((x) => set2.has(x)));
+  const intersectionArray = Array.from(intersection);
   return {
-    similarity: (intersection.size / Math.max(set1.size, set2.size)) * 100,
-    common: [...intersection]
+    similarity: (intersectionArray.length / Math.max(set1.size, set2.size)) * 100,
+    common: intersectionArray
   };
 };
 
