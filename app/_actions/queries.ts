@@ -232,10 +232,9 @@ export const calculateSimilarity = async (fid: string, secondaryUsername: string
 };
 
 export const getSimilarityScore = async (fid: string): Promise<number | null> => {
-  const { data, error } = await supabaseClient.from("FCUsers").select("similarityScore").eq("fid", fid).single();
-  if (error) {
-    console.error('Error fetching similarity score: ', error);
+  const { data, } = await supabaseClient.from("FCUsers").select("*").eq("fid", fid).single();
+  if(!data){
     return null;
   }
-  return data?.similarityScore || null;
+  return data.similarityScore;
 }
