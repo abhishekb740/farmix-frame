@@ -153,15 +153,19 @@ const calculateArraySimilarity = (array1: any[], array2: any[]): { similarity: n
 
 // Main function to calculate similarity between two users and collect common data.
 export const calculateSimilarity = async (fid: string, secondaryUsername: string): Promise<any> => {
-  const oldSimilarityScore = await getSimilarityScore(fid);
 
-  if (oldSimilarityScore !== null) {
-    const resp = await supabaseClient.from("FCUsers").update({
-      similarityScore: null
-    }).eq("fid", fid);
-
-    if (resp.status === 200) {
-      console.log('Similarity score set to null for fid: ', fid);
+  const { data, error } = await supabaseClient.from("FCUsers").select("*").eq("fid", fid).single();
+  if (data) {
+    if (data.similarityScore !== null) {
+      const resp = await supabaseClient.from("FCUsers").update({
+        similarityScore: null
+      }).eq("fid", fid);
+      if (resp.status === 200) {
+        console.log('Similarity score set to null for fid: ', fid);
+      }
+      else {
+        console.log('Error setting similarity score to null for fid: ', fid, error);
+      }
     }
   }
 
@@ -209,8 +213,6 @@ export const calculateSimilarity = async (fid: string, secondaryUsername: string
   console.log(`Similarity score: ${similarityScore}`);
 
   // Check if the record exists and update or insert accordingly
-  const { data, error } = await supabaseClient.from("FCUsers").select("fid").eq("fid", fid).single();
-
   if (data) {
     const updateResp = await supabaseClient.from("FCUsers").update({
       similarityScore
