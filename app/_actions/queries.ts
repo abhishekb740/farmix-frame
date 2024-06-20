@@ -39,7 +39,7 @@ interface TokenData {
 const getUserAddressFromFID = async (fid: string): Promise<string | null> => {
   const query = `query MyQuery {
   Socials(
-    input: {filter: {dappName: {_eq: farcaster}, userId: {_eq: "500605"}}, blockchain: ethereum}
+    input: {filter: {dappName: {_eq: farcaster}, userId: {_eq: "${fid}"}}, blockchain: ethereum}
   ) {
     Social {
       profileName
