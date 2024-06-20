@@ -13,7 +13,7 @@ type State = {
 }
 
 const app = new Frog<{ State: State }>({
-  assetsPath: `${process.env.VERCEL_URL}/`,
+  assetsPath: `/`,
   basePath: '/api',
   initialState: {
     loading: false,
