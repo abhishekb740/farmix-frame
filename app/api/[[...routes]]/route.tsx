@@ -121,7 +121,7 @@ app.frame("/loading", async (c) => {
     ),
     intents: [
       <Button value='refresh'>Refresh</Button>,
-      <Button.Reset>Go back</Button.Reset>
+      <Button.Reset>Reset</Button.Reset>
     ]
   })
 })

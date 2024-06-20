@@ -155,6 +155,7 @@ const calculateArraySimilarity = (array1: any[], array2: any[]): { similarity: n
 export const calculateSimilarity = async (fid: string, secondaryUsername: string): Promise<any> => {
 
   const { data, error } = await supabaseClient.from("FCUsers").select("*").eq("fid", fid).single();
+  console.log(data);
   if (data) {
     if (data.similarityScore !== null) {
       const resp = await supabaseClient.from("FCUsers").update({
@@ -168,6 +169,8 @@ export const calculateSimilarity = async (fid: string, secondaryUsername: string
       }
     }
   }
+
+  console.log("Working1");
 
   const primaryAddress = await getUserAddressFromFID(fid);
   console.log(primaryAddress);
@@ -232,7 +235,7 @@ export const calculateSimilarity = async (fid: string, secondaryUsername: string
 };
 
 export const getSimilarityScore = async (fid: string): Promise<number | null> => {
-  const { data, } = await supabaseClient.from("FCUsers").select("*").eq("fid", fid).single();
+  const { data, error } = await supabaseClient.from("FCUsers").select("*").eq("fid", fid).single();
   if(!data){
     return null;
   }
