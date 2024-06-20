@@ -33,7 +33,7 @@ app.frame('/', async (c) => {
   console.log(frameData?.fid)
   if (buttonValue === 'similarity') {
     await deriveState(async (previousState) => {
-      previousState.similarityScore = (await calculateSimilarity("flamekaiser", username)).similarityScore;
+      previousState.similarityScore = (await calculateSimilarity(frameData?.fid?.toString() ?? '', username)).similarityScore;
     });
   }
   const state = await deriveState()

@@ -36,6 +36,35 @@ interface TokenData {
   contract_ticker_symbol: string;
 }
 
+const getUserAddressFromFID = async (fid: string): Promise<string | null> => {
+  const query = `query MyQuery {
+  Socials(
+    input: {filter: {dappName: {_eq: farcaster}, userId: {_eq: "500605"}}, blockchain: ethereum}
+  ) {
+    Social {
+      profileName
+      connectedAddresses {
+        address
+      }
+    }
+  }
+}`;
+  const response = await fetch("https://api.airstack.xyz/gql", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: process.env.AIRSTACK_API_KEY!,
+    },
+    body: JSON.stringify({ query }),
+  });
+
+  const { data } = await response.json();
+  if (data.Socials && data.Socials.Social.length > 0 && data.Socials.Social[0].connectedAddresses.length > 0) {
+    return data.Socials.Social[0].connectedAddresses[0].address;
+  }
+  return null;
+}
+
 // Fetch user address from username using Farcaster.
 const getUserAddressFromFCUsername = async (username: string): Promise<string | null> => {
   const query = `query {
@@ -123,8 +152,9 @@ const calculateArraySimilarity = (array1: any[], array2: any[]): { similarity: n
 };
 
 // Main function to calculate similarity between two users and collect common data.
-export const calculateSimilarity = async (primaryUsername: string, secondaryUsername: string): Promise<any> => {
-  const primaryAddress = await getUserAddressFromFCUsername(primaryUsername);
+export const calculateSimilarity = async (fid: string, secondaryUsername: string): Promise<any> => {
+  const primaryAddress = await getUserAddressFromFID(fid);
+  console.log(primaryAddress);
   const secondaryAddress = await getUserAddressFromFCUsername(secondaryUsername);
 
   if (!primaryAddress || !secondaryAddress) {
