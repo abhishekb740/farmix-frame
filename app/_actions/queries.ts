@@ -1,6 +1,7 @@
 "use server";
 
 import { CovalentClient } from "@covalenthq/client-sdk";
+import { client } from "@/utils/supabase/client";
 
 // Define TypeScript interfaces for the expected data structures.
 interface Social {
