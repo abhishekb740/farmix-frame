@@ -5,11 +5,10 @@ import { devtools } from 'frog/dev'
 // import { neynar } from 'frog/hubs'
 import { handle } from 'frog/next'
 import { serveStatic } from 'frog/serve-static'
-import { calculateSimilarity } from '@/app/_actions/queries'
+import { calculateSimilarity, getSimilarityScore } from '@/app/_actions/queries'
 
 type State = {
-  loading: boolean,
-  similarityScore: number | null,
+  similarityScore: number | null
 }
 
 const app = new Frog<{ State: State }>({
@@ -28,15 +27,7 @@ const app = new Frog<{ State: State }>({
 
 app.frame('/', async (c) => {
 
-  const { buttonValue, deriveState, inputText, status, frameData } = c
-  const username = inputText || ''
-  console.log(frameData?.fid)
-  if (buttonValue === 'similarity') {
-    await deriveState(async (previousState) => {
-      previousState.similarityScore = (await calculateSimilarity(frameData?.fid?.toString() ?? '', username)).similarityScore;
-    });
-  }
-  const state = await deriveState()
+  const { status } = c
 
   return c.res({
     image: (
@@ -70,106 +61,70 @@ app.frame('/', async (c) => {
             display: 'flex',
           }}
         >
-          {status === 'response' ? `${state.similarityScore?.toFixed(2)}` : buttonValue==='similarity' ? 'Loading...' : 'Welcome to Farmix!' }
+          Welcome to Farmix!
         </div>
       </div>
     ),
     intents: [
       status === 'initial' && <TextInput placeholder="Enter Farcaster username" />,
-      status === 'initial' && <Button value='similarity'>Calculate Similarity</Button>,
-      status === 'response' && <Button>Check Similarity</Button>,
-      c.status === 'response' && <Button.Reset>Reset</Button.Reset>,
+      status === 'initial' && <Button value='similarity' action='/loading'>Calculate Similarity</Button>,
     ],
   })
 })
 
-// app.frame("/loading", async (c) => {
+app.frame("/loading", async (c) => {
+  const { inputText, status, frameData, buttonValue, deriveState } = c
+  const username = inputText || ''
+  console.log(frameData?.fid)
 
-
-
-//   return c.res({
-//     image: (
-//       <div
-//         style={{
-//           alignItems: 'center',
-//           background: 'black',
-//           backgroundSize: '100% 100%',
-//           display: 'flex',
-//           flexDirection: 'column',
-//           flexWrap: 'nowrap',
-//           height: '100%',
-//           justifyContent: 'center',
-//           textAlign: 'center',
-//           width: '100%',
-//         }}
-//       >
-//         <div
-//           style={{
-//             color: 'white',
-//             fontSize: 60,
-//             fontStyle: 'normal',
-//             letterSpacing: '-0.025em',
-//             lineHeight: 1.4,
-//             marginTop: 30,
-//             padding: '0 120px',
-//             whiteSpace: 'pre-wrap',
-//           }}
-//         >
-//           Calculating similarity...Please wait for a minute!
-//         </div>
-//       </div>
-//     ),
-//     intents: [
-//       <Button action='/submit'>Next</Button>,
-//       <Button.Reset>Reset</Button.Reset>
-//     ]
-//   })
-// })
-
-// app.frame('/submit', async (c) => {
-//   const { buttonValue, deriveState } = c
-
-//   const state = await deriveState()
-
-//   return c.res({
-//     image: (
-//       <div
-//         style={{
-//           alignItems: 'center',
-//           background: 'black',
-//           backgroundSize: '100% 100%',
-//           display: 'flex',
-//           flexDirection: 'column',
-//           flexWrap: 'nowrap',
-//           height: '100%',
-//           justifyContent: 'center',
-//           textAlign: 'center',
-//           width: '100%',
-//         }}
-//       >
-//         <div
-//           style={{
-//             color: 'white',
-//             fontSize: 60,
-//             fontStyle: 'normal',
-//             letterSpacing: '-0.025em',
-//             lineHeight: 1.4,
-//             marginTop: 30,
-//             padding: '0 120px',
-//             whiteSpace: 'pre-wrap',
-//           }}
-//         >
-//           {c.status === "response" && `Similarity Score: ${state.similarityScore?.toFixed(2)}%`}
-//         </div>
-//       </div>
-//     ),
-//     intents: [
-//       <Button.Reset>Reset</Button.Reset>,
-//     ],
-//   })
-// })
-
-
+  if (buttonValue === 'similarity') {
+    calculateSimilarity("500605", username)
+  }
+  // frameData?.fid.toString() ?? ''
+  const state = await deriveState(async previousState => {
+    if (buttonValue === 'refresh') {
+      previousState.similarityScore = await getSimilarityScore("500605")
+    }
+  })
+  console.log(state.similarityScore);
+  return c.res({
+    image: (
+      <div
+        style={{
+          alignItems: 'center',
+          background: 'black',
+          backgroundSize: '100% 100%',
+          display: 'flex',
+          flexDirection: 'column',
+          flexWrap: 'nowrap',
+          height: '100%',
+          justifyContent: 'center',
+          textAlign: 'center',
+          width: '100%',
+        }}
+      >
+        <div
+          style={{
+            color: 'white',
+            fontSize: 60,
+            fontStyle: 'normal',
+            letterSpacing: '-0.025em',
+            lineHeight: 1.4,
+            marginTop: 30,
+            padding: '0 120px',
+            whiteSpace: 'pre-wrap',
+          }}
+        >
+          {state.similarityScore === null ? 'Calculating similarity...Please wait for a minute!' : 'Similarity Score: ' + state.similarityScore}
+        </div>
+      </div>
+    ),
+    intents: [
+      <Button value='refresh'>Refresh</Button>,
+      <Button.Reset>Reset</Button.Reset>
+    ]
+  })
+})
 
 devtools(app, { serveStatic })
 

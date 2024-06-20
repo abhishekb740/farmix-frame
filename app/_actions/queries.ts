@@ -1,7 +1,7 @@
 "use server";
 
 import { CovalentClient } from "@covalenthq/client-sdk";
-import { client } from "@/utils/supabase/client";
+import { supabaseClient } from "@/utils/supabase/client";
 
 // Define TypeScript interfaces for the expected data structures.
 interface Social {
@@ -153,6 +153,18 @@ const calculateArraySimilarity = (array1: any[], array2: any[]): { similarity: n
 
 // Main function to calculate similarity between two users and collect common data.
 export const calculateSimilarity = async (fid: string, secondaryUsername: string): Promise<any> => {
+  const oldSimilarityScore = await getSimilarityScore(fid);
+
+  if (oldSimilarityScore !== null) {
+    const resp = await supabaseClient.from("FCUsers").update({
+      similarityScore: null
+    }).eq("fid", fid);
+
+    if (resp.status === 200) {
+      console.log('Similarity score set to null for fid: ', fid);
+    }
+  }
+
   const primaryAddress = await getUserAddressFromFID(fid);
   console.log(primaryAddress);
   const secondaryAddress = await getUserAddressFromFCUsername(secondaryUsername);
@@ -196,10 +208,32 @@ export const calculateSimilarity = async (fid: string, secondaryUsername: string
 
   console.log(`Similarity score: ${similarityScore}`);
 
-  return {
-    similarityScore,
-    commonNFTs: nftSimilarityResult.common,
-    commonTokens: tokenSimilarityResult.common,
-    commonFollowers: followingSimilarityResult.common,
-  };
+  // Check if the record exists and update or insert accordingly
+  const { data, error } = await supabaseClient.from("FCUsers").select("fid").eq("fid", fid).single();
+
+  if (data) {
+    const updateResp = await supabaseClient.from("FCUsers").update({
+      similarityScore
+    }).eq("fid", fid);
+    if (updateResp.status === 200) {
+      console.log('Similarity score updated in database for fid: ', fid);
+    }
+  } else {
+    const insertResp = await supabaseClient.from("FCUsers").insert({
+      fid,
+      similarityScore
+    });
+    if (insertResp.status === 201) {
+      console.log('Similarity score saved to database for fid: ', fid);
+    }
+  }
 };
+
+export const getSimilarityScore = async (fid: string): Promise<number | null> => {
+  const { data, error } = await supabaseClient.from("FCUsers").select("similarityScore").eq("fid", fid).single();
+  if (error) {
+    console.error('Error fetching similarity score: ', error);
+    return null;
+  }
+  return data?.similarityScore || null;
+}
