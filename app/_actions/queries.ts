@@ -1,8 +1,6 @@
 "use server";
 
 import { CovalentClient } from "@covalenthq/client-sdk";
-import fs from 'fs';
-import path from 'path';
 
 interface Social {
   connectedAddresses: {
@@ -22,8 +20,6 @@ interface FollowingAddress {
 
 interface Following {
   followingAddress: FollowingAddress;
-  tokenData?: TokenData[];
-  contract_ticker_symbol?: string;
 }
 
 interface NFTData {
@@ -31,30 +27,15 @@ interface NFTData {
     external_data?: {
       image?: string;
     };
-  }[] | undefined;
+  }[];
   followingAddress?: FollowingAddress;
 }
 
 interface TokenData {
-  contract_ticker_symbol?: string;
-  followingAddress?: FollowingAddress;
+  contract_ticker_symbol: string;
 }
 
-const similarityScoresFilePath = path.join(__dirname, 'similarityScores.json');
-
-const readSimilarityScores = (): Record<string, number | null> => {
-  if (!fs.existsSync(similarityScoresFilePath)) {
-    return {};
-  }
-  const data = fs.readFileSync(similarityScoresFilePath, 'utf8');
-  return JSON.parse(data);
-};
-
-const writeSimilarityScores = (scores: Record<string, number | null>) => {
-  fs.writeFileSync(similarityScoresFilePath, JSON.stringify(scores, null, 2));
-};
-
-let similarityScores: Record<string, number | null> = readSimilarityScores();
+let similarityScores: Record<string, number | null> = {};
 
 const getUserAddressFromFID = async (fid: string): Promise<string | null> => {
   const query = `query MyQuery {
@@ -115,6 +96,7 @@ const getUserAddressFromFCUsername = async (username: string): Promise<string | 
   return null;
 };
 
+
 const getUserFollowingsForAddress = async (address: string): Promise<Following[]> => {
   const query = `query {
     Farcaster: SocialFollowings(input: { filter: { identity: { _in: ["${address}"] }, dappName: { _eq: farcaster } }, blockchain: ALL }) {
@@ -167,14 +149,17 @@ const calculateArraySimilarity = (array1: any[], array2: any[]): { similarity: n
 export const calculateSimilarity = async (fid: string, secondaryUsername: string): Promise<number> => {
   if (similarityScores[fid] !== undefined) {
     similarityScores[fid] = null;
-    writeSimilarityScores(similarityScores);
     console.log(`Similarity score set to null for fid: ${fid}`);
   }
 
   const primaryAddressPromise = getUserAddressFromFID(fid);
   const secondaryAddressPromise = getUserAddressFromFCUsername(secondaryUsername);
 
+
   const [primaryAddress, secondaryAddress] = await Promise.all([primaryAddressPromise, secondaryAddressPromise]);
+
+  console.log(primaryAddress, secondaryAddress);
+
 
   if (!primaryAddress || !secondaryAddress) {
     console.error("One or both usernames did not resolve to addresses.");
@@ -203,11 +188,21 @@ export const calculateSimilarity = async (fid: string, secondaryUsername: string
   const primaryNfts = (primaryNftData as NFTData[]).map(item => item.nft_data?.[0]?.external_data?.image).filter(image => image);
   const secondaryNfts = (secondaryNftData as NFTData[]).map(item => item.nft_data?.[0]?.external_data?.image).filter(image => image);
 
-  const primaryTokens = (primaryTokenData as TokenData[]).map(item => item?.contract_ticker_symbol);
-  const secondaryTokens = (secondaryTokenData as TokenData[]).map(item => item?.contract_ticker_symbol);
+  const primaryTokens = (primaryTokenData as TokenData[]).map(item => item.contract_ticker_symbol);
+  const secondaryTokens = (secondaryTokenData as TokenData[]).map(item => item.contract_ticker_symbol);
 
-  const primaryFollowings = primaryFollowingData.map(following => following.followingAddress?.socials[0]?.profileName).filter(name => name);
-  const secondaryFollowings = secondaryFollowingData.map(following => following.followingAddress?.socials[0]?.profileName).filter(name => name);
+  const primaryFollowings = primaryFollowingData.map(following => {
+    if ('followingAddress' in following && following.followingAddress) {
+      return following.followingAddress.socials[0]?.profileName;
+    }
+    return null;
+  }).filter(name => name);
+  const secondaryFollowings = secondaryFollowingData.map(following => {
+    if ('followingAddress' in following && following.followingAddress) {
+      return following.followingAddress.socials[0]?.profileName;
+    }
+    return null;
+  }).filter(name => name);
 
   const nftSimilarityResult = calculateArraySimilarity(primaryNfts, secondaryNfts);
   console.log(`NFT similarity: ${nftSimilarityResult.similarity}`);
@@ -224,7 +219,6 @@ export const calculateSimilarity = async (fid: string, secondaryUsername: string
   console.log(`Similarity score: ${similarityScore}`);
 
   similarityScores[fid] = similarityScore;
-  writeSimilarityScores(similarityScores);
 
   return similarityScore;
 };
