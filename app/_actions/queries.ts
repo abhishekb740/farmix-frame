@@ -22,6 +22,8 @@ interface FollowingAddress {
 
 interface Following {
   followingAddress: FollowingAddress;
+  tokenData?: TokenData[];
+  contract_ticker_symbol?: string;
 }
 
 interface NFTData {
@@ -29,16 +31,18 @@ interface NFTData {
     external_data?: {
       image?: string;
     };
-  }[];
+  }[] | undefined;
+  followingAddress?: FollowingAddress;
 }
 
 interface TokenData {
-  contract_ticker_symbol: string;
+  contract_ticker_symbol?: string;
+  followingAddress?: FollowingAddress;
 }
 
 const similarityScoresFilePath = path.join(__dirname, 'similarityScores.json');
 
-const readSimilarityScores = (): Record<string, number> => {
+const readSimilarityScores = (): Record<string, number | null> => {
   if (!fs.existsSync(similarityScoresFilePath)) {
     return {};
   }
@@ -46,11 +50,11 @@ const readSimilarityScores = (): Record<string, number> => {
   return JSON.parse(data);
 };
 
-const writeSimilarityScores = (scores: Record<string, number>) => {
+const writeSimilarityScores = (scores: Record<string, number | null>) => {
   fs.writeFileSync(similarityScoresFilePath, JSON.stringify(scores, null, 2));
 };
 
-let similarityScores: Record<string, number> = readSimilarityScores();
+let similarityScores: Record<string, number | null> = readSimilarityScores();
 
 const getUserAddressFromFID = async (fid: string): Promise<string | null> => {
   const query = `query MyQuery {
@@ -167,8 +171,10 @@ export const calculateSimilarity = async (fid: string, secondaryUsername: string
     console.log(`Similarity score set to null for fid: ${fid}`);
   }
 
-  const primaryAddress = await getUserAddressFromFID(fid);
-  const secondaryAddress = await getUserAddressFromFCUsername(secondaryUsername);
+  const primaryAddressPromise = getUserAddressFromFID(fid);
+  const secondaryAddressPromise = getUserAddressFromFCUsername(secondaryUsername);
+
+  const [primaryAddress, secondaryAddress] = await Promise.all([primaryAddressPromise, secondaryAddressPromise]);
 
   if (!primaryAddress || !secondaryAddress) {
     console.error("One or both usernames did not resolve to addresses.");
@@ -177,23 +183,31 @@ export const calculateSimilarity = async (fid: string, secondaryUsername: string
 
   const client = new CovalentClient(`${process.env.COVALENT_API_KEY}`);
 
-  const [primaryNftData, secondaryNftData, primaryTokenData, secondaryTokenData, primaryFollowingData, secondaryFollowingData] = await Promise.all([
+  const primaryDataPromises = [
     getAllNFTsForAddress(primaryAddress, client),
-    getAllNFTsForAddress(secondaryAddress, client),
     getAllTokensForAddress(primaryAddress, client),
+    getUserFollowingsForAddress(primaryAddress)
+  ];
+
+  const secondaryDataPromises = [
+    getAllNFTsForAddress(secondaryAddress, client),
     getAllTokensForAddress(secondaryAddress, client),
-    getUserFollowingsForAddress(primaryAddress),
-    getUserFollowingsForAddress(secondaryAddress),
-  ]);
+    getUserFollowingsForAddress(secondaryAddress)
+  ];
 
-  const primaryNfts = primaryNftData.map(item => item.nft_data?.[0]?.external_data?.image).filter(image => image);
-  const secondaryNfts = secondaryNftData.map(item => item.nft_data?.[0]?.external_data?.image).filter(image => image);
+  const [
+    [primaryNftData, primaryTokenData, primaryFollowingData],
+    [secondaryNftData, secondaryTokenData, secondaryFollowingData]
+  ] = await Promise.all([Promise.all(primaryDataPromises), Promise.all(secondaryDataPromises)]);
 
-  const primaryTokens = primaryTokenData.map(item => item.contract_ticker_symbol);
-  const secondaryTokens = secondaryTokenData.map(item => item.contract_ticker_symbol);
+  const primaryNfts = (primaryNftData as NFTData[]).map(item => item.nft_data?.[0]?.external_data?.image).filter(image => image);
+  const secondaryNfts = (secondaryNftData as NFTData[]).map(item => item.nft_data?.[0]?.external_data?.image).filter(image => image);
 
-  const primaryFollowings = primaryFollowingData.map(following => following.followingAddress.socials[0]?.profileName);
-  const secondaryFollowings = secondaryFollowingData.map(following => following.followingAddress.socials[0]?.profileName);
+  const primaryTokens = (primaryTokenData as TokenData[]).map(item => item?.contract_ticker_symbol);
+  const secondaryTokens = (secondaryTokenData as TokenData[]).map(item => item?.contract_ticker_symbol);
+
+  const primaryFollowings = primaryFollowingData.map(following => following.followingAddress?.socials[0]?.profileName).filter(name => name);
+  const secondaryFollowings = secondaryFollowingData.map(following => following.followingAddress?.socials[0]?.profileName).filter(name => name);
 
   const nftSimilarityResult = calculateArraySimilarity(primaryNfts, secondaryNfts);
   console.log(`NFT similarity: ${nftSimilarityResult.similarity}`);

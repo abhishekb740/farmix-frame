@@ -78,13 +78,12 @@ app.frame("/loading", async (c) => {
   console.log(frameData?.fid)
 
   if (buttonValue === 'similarity') {
-    calculateSimilarity("500605", username)
+    calculateSimilarity(frameData?.fid.toString() ?? '', username)
   }
   
   const state = await deriveState(async previousState => {
     if (buttonValue === 'refresh') {
-      // frameData?.fid.toString() ?? ''
-      previousState.similarityScore = await getSimilarityScore("500605")
+      previousState.similarityScore = await getSimilarityScore(frameData?.fid.toString() ?? '')
     }
   })
   console.log(state.similarityScore);
