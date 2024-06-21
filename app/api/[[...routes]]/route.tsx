@@ -78,12 +78,13 @@ app.frame("/loading", async (c) => {
   console.log(frameData?.fid)
 
   if (buttonValue === 'similarity') {
-    calculateSimilarity(frameData?.fid.toString() ?? '', username)
+    calculateSimilarity("500605", username)
   }
   
   const state = await deriveState(async previousState => {
     if (buttonValue === 'refresh') {
-      previousState.similarityScore = await getSimilarityScore(frameData?.fid.toString() ?? '')
+      // frameData?.fid.toString() ?? ''
+      previousState.similarityScore = await getSimilarityScore("500605")
     }
   })
   console.log(state.similarityScore);
@@ -115,7 +116,7 @@ app.frame("/loading", async (c) => {
             whiteSpace: 'pre-wrap',
           }}
         >
-          {state.similarityScore === null ? 'Calculating similarity...Please wait for a minute!' : 'Similarity Score: ' + state.similarityScore}
+          {state.similarityScore === null ? 'Calculating similarity...Please wait for a minute!' : 'Similarity Score: ' + state.similarityScore.toFixed(2)}
         </div>
       </div>
     ),
