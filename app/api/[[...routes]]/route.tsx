@@ -78,13 +78,39 @@ app.frame("/loading", async (c) => {
   console.log(frameData?.fid)
 
   if (buttonValue === 'similarity') {
-    calculateSimilarity("500605", username)
+    const resp = fetch("https://farmix-frame-server-production.up.railway.app/calculateSimilarity", { 
+      method: "POST", 
+      body: JSON.stringify({ 
+        fid: frameData?.fid.toString() ?? '', 
+        secondaryUsername: username, 
+      }), 
+      headers: { 
+        "Content-Type": "application/json" 
+      } 
+    }); 
+
   }
   
   const state = await deriveState(async previousState => {
     if (buttonValue === 'refresh') {
       // frameData?.fid.toString() ?? ''
-      previousState.similarityScore = await getSimilarityScore("500605")
+      const resp = await fetch("https://farmix-frame-server-production.up.railway.app/getSimilarityScore", { 
+        method: "POST", 
+        body: JSON.stringify({ 
+          fid: frameData?.fid.toString() ?? ''
+        }), 
+        headers: { 
+          "Content-Type": "application/json" 
+        } 
+      }); 
+  
+      if (!resp.ok) { 
+        throw new Error(`Error: ${resp.status} ${resp.statusText}`); 
+      } 
+      console.log("Similarity data:", resp); 
+  
+      const data = await resp.json();
+      previousState.similarityScore = data;
     }
   })
   console.log(state.similarityScore);
