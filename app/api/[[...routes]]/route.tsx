@@ -5,7 +5,6 @@ import { devtools } from 'frog/dev'
 // import { neynar } from 'frog/hubs'
 import { handle } from 'frog/next'
 import { serveStatic } from 'frog/serve-static'
-import { calculateSimilarity, getSimilarityScore } from '@/app/_actions/queries'
 
 type State = {
   similarityScore: number | null
