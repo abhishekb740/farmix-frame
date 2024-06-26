@@ -34,6 +34,7 @@ app.frame('/', async (c) => {
     intents: [
       status === 'initial' && <TextInput placeholder="Enter Farcaster username" />,
       status === 'initial' && <Button value='similarity' action='/loading'>🔎</Button>,
+      <Button action='/tipCreator'>Tip</Button>,
       <Button.Link href='https://www.farmix.online/'>Website</Button.Link>,
     ],
   })
