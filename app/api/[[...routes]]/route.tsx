@@ -33,7 +33,9 @@ app.frame('/', async (c) => {
     image: '/metadata.png',
     intents: [
       status === 'initial' && <TextInput placeholder="Enter Farcaster username" />,
-      status === 'initial' && <Button value='similarity' action='/loading'>Calculate Similarity</Button>,
+      status === 'initial' && <Button value='similarity' action='/loading'>🔎</Button>,
+      <Button.Link href='https://www.farmix.online/'>Website</Button.Link>,
+      <Button.Redirect location="https://warpcast.com/~/compose?text=%F0%9F%8C%90%20My%20Digital%20Twin%20on%20Warpcast!%20%F0%9F%9A%80%0A%0ADiscovered%20something%20amazing!%20By%20comparing%20our%20owned%20tokens%20and%20NFTs,%20I%20have%20a%20similarity%20score%20of%20${similarityData?.similarityScore.toFixed(2)}%25%20with%20@${similarityData?.secondaryUsername}%20%0A%0AWant%20to%20find%20your%20own%20digital%20twin%20and%20see%20how%20similar%20you%20are%20with%20other%20users?%20Join%20Farmix%20now%20and%20explore%20the%20exciting%20world%20of%20digital%20assets!%0A%0Ahttps%3A%2F%2F&embeds[]=farmix-frame.vercel.app/api">Share</Button.Redirect>
     ],
   })
 })
@@ -46,7 +48,7 @@ app.frame("/loading", async (c) => {
     const resp = fetch("https://farmix-frame-server-production.up.railway.app/calculateSimilarity", {
       method: "POST",
       body: JSON.stringify({
-        fid: frameData?.fid.toString() ?? '',
+        fid: "500605",
         secondaryUsername: username,
       }),
       headers: {
@@ -61,7 +63,7 @@ app.frame("/loading", async (c) => {
       const resp = await fetch("https://farmix-frame-server-production.up.railway.app/getSimilarityScore", {
         method: "POST",
         body: JSON.stringify({
-          fid: frameData?.fid.toString() ?? ''
+          fid: "500605"
         }),
         headers: {
           "Content-Type": "application/json"
@@ -71,8 +73,6 @@ app.frame("/loading", async (c) => {
       if (!resp.ok) {
         throw new Error(`Error: ${resp.status} ${resp.statusText}`);
       }
-      console.log("Similarity data:", resp);
-
       const data = await resp.json();
       previousState.similarityScore = data;
     }
@@ -83,8 +83,8 @@ app.frame("/loading", async (c) => {
       <div
         style={{
           alignItems: 'center',
-          background: 'black',
           backgroundSize: '100% 100%',
+          background: '#9D00FE',
           display: 'flex',
           flexDirection: 'column',
           flexWrap: 'nowrap',
@@ -97,23 +97,39 @@ app.frame("/loading", async (c) => {
         <div
           style={{
             color: 'white',
-            fontSize: 60,
+            fontSize: 70,
             fontStyle: 'normal',
             letterSpacing: '-0.025em',
             lineHeight: 1.4,
             marginTop: 30,
             padding: '0 120px',
             whiteSpace: 'pre-wrap',
+            display: 'flex'
           }}
         >
-          {state.similarityScore === null ? 'Calculating similarity...Please wait for a minute!' : 'Similarity Score: ' + state.similarityScore.toFixed(2)}
+          {state.similarityScore === null ?
+            <div style={{ display: 'flex', flexDirection: 'column', fontSize: '40', gap: '1rem', justifyContent: 'center', alignItems: 'center' }}>
+              <div style={{ display: 'flex', fontSize: 60 }}>
+                Calculating similarity...
+              </div>
+              <div style={{ display: 'flex', fontSize: 33 }}>
+                This may take up to a minute if the user has many NFTs and tokens.
+              </div>
+              <div style={{ display: 'flex', fontSize: 35 }}>
+                Please refresh after a moment to check the similarity score.
+              </div>
+              <div style={{ display: 'flex', fontSize: 35 }}>
+                You can view a detailed analysis on the website.
+              </div>
+            </div> : 'Similarity Score: ' + state.similarityScore.toFixed(2)}
         </div>
       </div>
     ),
     intents: [
       <Button value='refresh'>Refresh</Button>,
       <Button.Reset>Reset</Button.Reset>,
-      <Button action='/tipCreator'>Tip</Button>
+      <Button action='/tipCreator'>Tip</Button>,
+      <Button.Redirect location='https://main.d1mk2y9g4ss2pn.amplifyapp.com/'>Website</Button.Redirect>
     ]
   })
 })
@@ -157,16 +173,13 @@ app.frame("/tipCreator", async (c) => {
       <Button action='/loading'>Go Back</Button>,
       <Button.Reset>Reset</Button.Reset>,
       <Button.Transaction target='/tip'>Tip</Button.Transaction>,
+      <Button.Redirect location='https://main.d1mk2y9g4ss2pn.amplifyapp.com/'>Website</Button.Redirect>
     ]
   })
 });
 
 app.transaction('/tip', async (c) => {
   const { inputText } = c;
-  // Check if input text is only numbers
-  // if (!/^\d+$/.test(inputText ?? '')) {
-    
-  // }
   return c.contract({
     abi,
     chainId: "eip155:84532",
