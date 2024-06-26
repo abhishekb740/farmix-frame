@@ -1,10 +1,11 @@
 /** @jsxImportSource frog/jsx */
 
-import { Button, Frog, TextInput } from 'frog'
+import { Button, Frog, parseEther, TextInput } from 'frog'
 import { devtools } from 'frog/dev'
 // import { neynar } from 'frog/hubs'
 import { handle } from 'frog/next'
 import { serveStatic } from 'frog/serve-static'
+import { abi } from "./abi"
 
 type State = {
   similarityScore: number | null
@@ -29,41 +30,7 @@ app.frame('/', async (c) => {
   const { status } = c
 
   return c.res({
-    image: (
-      <div
-        style={{
-          alignItems: 'center',
-          background:
-            c.status === 'response'
-              ? 'linear-gradient(to right, #432889, #17101F)'
-              : 'black',
-          backgroundSize: '100% 100%',
-          display: 'flex',
-          flexDirection: 'column',
-          flexWrap: 'nowrap',
-          height: '100%',
-          justifyContent: 'center',
-          textAlign: 'center',
-          width: '100%',
-        }}
-      >
-        <div
-          style={{
-            color: 'white',
-            fontSize: 60,
-            fontStyle: 'normal',
-            letterSpacing: '-0.025em',
-            lineHeight: 1.4,
-            marginTop: 30,
-            padding: '0 120px',
-            whiteSpace: 'pre-wrap',
-            display: 'flex',
-          }}
-        >
-          Welcome to Farmix!
-        </div>
-      </div>
-    ),
+    image: '/metadata.png',
     intents: [
       status === 'initial' && <TextInput placeholder="Enter Farcaster username" />,
       status === 'initial' && <Button value='similarity' action='/loading'>Calculate Similarity</Button>,
@@ -72,42 +39,40 @@ app.frame('/', async (c) => {
 })
 
 app.frame("/loading", async (c) => {
-  const { inputText, status, frameData, buttonValue, deriveState } = c
+  const { inputText, frameData, buttonValue, deriveState } = c
   const username = inputText || ''
-  console.log(frameData?.fid)
 
   if (buttonValue === 'similarity') {
-    const resp = fetch("https://farmix-frame-server-production.up.railway.app/calculateSimilarity", { 
-      method: "POST", 
-      body: JSON.stringify({ 
-        fid: frameData?.fid.toString() ?? '', 
-        secondaryUsername: username, 
-      }), 
-      headers: { 
-        "Content-Type": "application/json" 
-      } 
-    }); 
-
+    const resp = fetch("https://farmix-frame-server-production.up.railway.app/calculateSimilarity", {
+      method: "POST",
+      body: JSON.stringify({
+        fid: frameData?.fid.toString() ?? '',
+        secondaryUsername: username,
+      }),
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
   }
-  
+
   const state = await deriveState(async previousState => {
     if (buttonValue === 'refresh') {
       // frameData?.fid.toString() ?? ''
-      const resp = await fetch("https://farmix-frame-server-production.up.railway.app/getSimilarityScore", { 
-        method: "POST", 
-        body: JSON.stringify({ 
+      const resp = await fetch("https://farmix-frame-server-production.up.railway.app/getSimilarityScore", {
+        method: "POST",
+        body: JSON.stringify({
           fid: frameData?.fid.toString() ?? ''
-        }), 
-        headers: { 
-          "Content-Type": "application/json" 
-        } 
-      }); 
-  
-      if (!resp.ok) { 
-        throw new Error(`Error: ${resp.status} ${resp.statusText}`); 
-      } 
-      console.log("Similarity data:", resp); 
-  
+        }),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (!resp.ok) {
+        throw new Error(`Error: ${resp.status} ${resp.statusText}`);
+      }
+      console.log("Similarity data:", resp);
+
       const data = await resp.json();
       previousState.similarityScore = data;
     }
@@ -147,8 +112,67 @@ app.frame("/loading", async (c) => {
     ),
     intents: [
       <Button value='refresh'>Refresh</Button>,
-      <Button.Reset>Reset</Button.Reset>
+      <Button.Reset>Reset</Button.Reset>,
+      <Button action='/tipCreator'>Tip</Button>
     ]
+  })
+})
+
+app.frame("/tipCreator", async (c) => {
+
+  return c.res({
+    image: (
+      <div
+        style={{
+          alignItems: 'center',
+          background: 'black',
+          backgroundSize: '100% 100%',
+          display: 'flex',
+          flexDirection: 'column',
+          flexWrap: 'nowrap',
+          height: '100%',
+          justifyContent: 'center',
+          textAlign: 'center',
+          width: '100%',
+        }}
+      >
+        <div
+          style={{
+            color: 'white',
+            fontSize: 60,
+            fontStyle: 'normal',
+            letterSpacing: '-0.025em',
+            lineHeight: 1.4,
+            marginTop: 30,
+            padding: '0 120px',
+            whiteSpace: 'pre-wrap',
+          }}
+        >
+          Enter the amount you want to tip
+        </div>
+      </div>
+    ),
+    intents: [
+      <TextInput placeholder="Enter the eth you want to tip" />,
+      <Button action='/loading'>Go Back</Button>,
+      <Button.Reset>Reset</Button.Reset>,
+      <Button.Transaction target='/tip'>Tip</Button.Transaction>,
+    ]
+  })
+});
+
+app.transaction('/tip', async (c) => {
+  const { inputText } = c;
+  // Check if input text is only numbers
+  // if (!/^\d+$/.test(inputText ?? '')) {
+    
+  // }
+  return c.contract({
+    abi,
+    chainId: "eip155:84532",
+    functionName: "tip",
+    to: "0x86402C7dF6a09eD98C82922dD448334e974Da9F2",
+    value: parseEther(inputText ?? '0.004'),
   })
 })
 
