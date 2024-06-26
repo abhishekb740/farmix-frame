@@ -136,37 +136,7 @@ app.frame("/loading", async (c) => {
 app.frame("/tipCreator", async (c) => {
 
   return c.res({
-    image: (
-      <div
-        style={{
-          alignItems: 'center',
-          background: 'black',
-          backgroundSize: '100% 100%',
-          display: 'flex',
-          flexDirection: 'column',
-          flexWrap: 'nowrap',
-          height: '100%',
-          justifyContent: 'center',
-          textAlign: 'center',
-          width: '100%',
-        }}
-      >
-        <div
-          style={{
-            color: 'white',
-            fontSize: 60,
-            fontStyle: 'normal',
-            letterSpacing: '-0.025em',
-            lineHeight: 1.4,
-            marginTop: 30,
-            padding: '0 120px',
-            whiteSpace: 'pre-wrap',
-          }}
-        >
-          Enter the amount you want to tip
-        </div>
-      </div>
-    ),
+    image: '/tips.png',
     intents: [
       <TextInput placeholder="Enter the eth you want to tip" />,
       <Button action='/loading'>Go Back</Button>,
@@ -181,9 +151,9 @@ app.transaction('/tip', async (c) => {
   const { inputText } = c;
   return c.contract({
     abi,
-    chainId: "eip155:84532",
+    chainId: "eip155:8453",
     functionName: "tip",
-    to: "0x86402C7dF6a09eD98C82922dD448334e974Da9F2",
+    to: "0x6cCa9fd3C09a079E5755E887DACD3d09509e30A1",
     value: parseEther(inputText ?? '0.004'),
   })
 })
