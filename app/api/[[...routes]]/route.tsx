@@ -47,7 +47,7 @@ app.frame("/loading", async (c) => {
     const resp = fetch("https://farmix-frame-server-production.up.railway.app/calculateSimilarity", {
       method: "POST",
       body: JSON.stringify({
-        fid: "500605",
+        fid: frameData?.fid.toString() ?? '',
         secondaryUsername: username,
       }),
       headers: {
@@ -58,11 +58,10 @@ app.frame("/loading", async (c) => {
 
   const state = await deriveState(async previousState => {
     if (buttonValue === 'refresh') {
-      // frameData?.fid.toString() ?? ''
       const resp = await fetch("https://farmix-frame-server-production.up.railway.app/getSimilarityScore", {
         method: "POST",
         body: JSON.stringify({
-          fid: "500605"
+          fid: frameData?.fid.toString() ?? ''
         }),
         headers: {
           "Content-Type": "application/json"
@@ -138,7 +137,7 @@ app.frame("/tipCreator", async (c) => {
   return c.res({
     image: '/tips.png',
     intents: [
-      <TextInput placeholder="Enter the eth you want to tip" />,
+      <TextInput placeholder="Quantify our work in ETH"/>,
       <Button action='/loading'>Go Back</Button>,
       <Button.Reset>Reset</Button.Reset>,
       <Button.Transaction target='/tip'>Tip</Button.Transaction>,
