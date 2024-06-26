@@ -5,7 +5,7 @@ import { devtools } from 'frog/dev'
 // import { neynar } from 'frog/hubs'
 import { handle } from 'frog/next'
 import { serveStatic } from 'frog/serve-static'
-import { abi } from "./abi"
+import { abi } from "../../abi"
 
 type State = {
   similarityScore: number | null
@@ -35,7 +35,6 @@ app.frame('/', async (c) => {
       status === 'initial' && <TextInput placeholder="Enter Farcaster username" />,
       status === 'initial' && <Button value='similarity' action='/loading'>🔎</Button>,
       <Button.Link href='https://www.farmix.online/'>Website</Button.Link>,
-      <Button.Redirect location="https://warpcast.com/~/compose?text=%F0%9F%8C%90%20My%20Digital%20Twin%20on%20Warpcast!%20%F0%9F%9A%80%0A%0ADiscovered%20something%20amazing!%20By%20comparing%20our%20owned%20tokens%20and%20NFTs,%20I%20have%20a%20similarity%20score%20of%20${similarityData?.similarityScore.toFixed(2)}%25%20with%20@${similarityData?.secondaryUsername}%20%0A%0AWant%20to%20find%20your%20own%20digital%20twin%20and%20see%20how%20similar%20you%20are%20with%20other%20users?%20Join%20Farmix%20now%20and%20explore%20the%20exciting%20world%20of%20digital%20assets!%0A%0Ahttps%3A%2F%2F&embeds[]=farmix-frame.vercel.app/api">Share</Button.Redirect>
     ],
   })
 })
