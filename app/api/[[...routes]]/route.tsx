@@ -129,7 +129,7 @@ app.frame("/loading", async (c) => {
       <Button value='refresh'>Refresh</Button>,
       <Button.Reset>Reset</Button.Reset>,
       <Button action='/tipCreator'>Tip</Button>,
-      <Button.Redirect location='https://main.d1mk2y9g4ss2pn.amplifyapp.com/'>Website</Button.Redirect>,
+      <Button.Redirect location='https://www.farmix.online/'>Website</Button.Redirect>,
     ]
   })
 })
@@ -143,7 +143,7 @@ app.frame("/tipCreator", async (c) => {
       <Button action='/loading'>Go Back</Button>,
       <Button.Reset>Reset</Button.Reset>,
       <Button.Transaction target='/tip'>Tip</Button.Transaction>,
-      <Button.Redirect location='https://main.d1mk2y9g4ss2pn.amplifyapp.com/'>Website</Button.Redirect>
+      <Button.Redirect location='https://www.farmix.online/'>Website</Button.Redirect>
     ]
   })
 });
