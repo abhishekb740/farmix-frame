@@ -113,7 +113,7 @@ app.frame("/loading", async (c) => {
                 Calculating similarity...
               </div>
               <div style={{ display: 'flex', fontSize: 33 }}>
-                This may take up to a minute if the user has many NFTs and tokens.
+                This may take up to a minute if the user has many assets.
               </div>
               <div style={{ display: 'flex', fontSize: 35 }}>
                 Please refresh after a moment to check the similarity score.
